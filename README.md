@@ -46,6 +46,7 @@ La app muestra un resumen tabular comun para todos los wrappers, tablas adiciona
 - [`global.R`](./global.R): catalogo de wrappers y funciones de ejecucion
 - [`ui.R`](./ui.R): interfaz Shiny dinamica por tipo de analisis
 - [`server.R`](./server.R): flujo reactivo generico
+- [`openai_helpers.R`](./openai_helpers.R): helpers para enviar resultados y graficos a OpenAI
 - [`gage_rr_sample.xlsx`](./gage_rr_sample.xlsx): archivo de prueba con hojas `qic_u_chart`, `pareto`, `bchart` y `README`
 
 ## Requisitos

@@ -172,6 +172,34 @@ build_plot_export <- function(plot_obj, path, width = 12, height = 7, dpi = 180)
   invisible(path)
 }
 
+suppress_default_plot_file <- function(code) {
+  temp_plot <- tempfile(fileext = ".png")
+  grDevices::png(filename = temp_plot, width = 480, height = 480)
+  on.exit({
+    if (grDevices::dev.cur() > 1) {
+      grDevices::dev.off()
+    }
+    unlink(temp_plot)
+  }, add = TRUE)
+
+  force(code)
+}
+
+cleanup_rplots_pdf <- function() {
+  if (!file.exists("Rplots.pdf")) {
+    return(invisible(FALSE))
+  }
+
+  try(closeAllConnections(), silent = TRUE)
+
+  removed <- suppressWarnings(file.remove("Rplots.pdf"))
+  if (!isTRUE(removed) && file.exists("Rplots.pdf")) {
+    suppressWarnings(unlink("Rplots.pdf", force = TRUE))
+  }
+
+  invisible(!file.exists("Rplots.pdf"))
+}
+
 build_pareto_table <- function(x, use_na = FALSE) {
   counts <- sort(table(x, useNA = if (isTRUE(use_na)) "ifany" else "no"), decreasing = TRUE)
   df <- data.frame(
@@ -227,7 +255,7 @@ run_qic_analysis <- function(df, params) {
   n_value <- if (identical(params$n_col, "_none")) NULL else df[[params$n_col]]
   notes_value <- if (identical(params$notes_col, "_none")) NULL else df[[params$notes_col]]
 
-  plot_obj <- qicharts2::qic(
+  plot_obj <- suppress_default_plot_file(qicharts2::qic(
     x = x_value,
     y = y_value,
     n = n_value,
@@ -253,7 +281,7 @@ run_qic_analysis <- function(df, params) {
     y.neg = params$y_neg,
     y.percent = params$y_percent,
     show.grid = params$show_grid
-  )
+  ))
 
   summary_df <- summary(plot_obj)
   detail_df <- qicharts2::qic(
@@ -284,6 +312,7 @@ run_qic_analysis <- function(df, params) {
     show.grid = params$show_grid,
     return.data = TRUE
   )
+  cleanup_rplots_pdf()
 
   list(
     analysis_id = "qic",
@@ -313,7 +342,7 @@ run_pareto_analysis <- function(df, params) {
   require_qicharts2()
 
   x_value <- df[[params$category_col]]
-  plot_obj <- qicharts2::paretochart(
+  plot_obj <- suppress_default_plot_file(qicharts2::paretochart(
     x = x_value,
     title = params$title,
     subtitle = params$subtitle,
@@ -321,7 +350,8 @@ run_pareto_analysis <- function(df, params) {
     xlab = params$xlab,
     x.angle = params$x_angle,
     useNA = params$use_na
-  )
+  ))
+  cleanup_rplots_pdf()
 
   pareto_table <- build_pareto_table(x_value, use_na = params$use_na)
 
@@ -349,7 +379,7 @@ run_bchart_analysis <- function(df, params) {
   require_qicharts2()
 
   x_value <- coerce_binary_vector(df[[params$outcome_col]])
-  plot_obj <- qicharts2::bchart(
+  plot_obj <- suppress_default_plot_file(qicharts2::bchart(
     x = x_value,
     target = params$target,
     or = params$odds_ratio,
@@ -357,7 +387,8 @@ run_bchart_analysis <- function(df, params) {
     title = params$title,
     ylab = params$ylab,
     xlab = params$xlab
-  )
+  ))
+  cleanup_rplots_pdf()
 
   detail_df <- as.data.frame(plot_obj$data)
   signal_count <- sum(!is.na(detail_df$signal1) | !is.na(detail_df$signal2))
