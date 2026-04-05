@@ -7,6 +7,11 @@
 #' @keywords internal
 NULL
 
+#' Reduce un resultado de analisis a una estructura serializable
+#'
+#' @param analysis_result Lista devuelta por los wrappers de analisis SPC.
+#'
+#' @return Una lista con campos estables aptos para serializacion JSON.
 sanitize_analysis_result <- function(analysis_result) {
   list(
     analysis_id = analysis_result$analysis_id,
@@ -22,6 +27,11 @@ sanitize_analysis_result <- function(analysis_result) {
   )
 }
 
+#' Codifica una imagen como data URL en base64
+#'
+#' @param image_path Ruta local a una imagen soportada.
+#'
+#' @return Una cadena `data:` lista para enviarse a la API de OpenAI.
 encode_image_data_url <- function(image_path) {
   if (!requireNamespace("base64enc", quietly = TRUE)) {
     stop("Falta instalar 'base64enc'. Usa install.packages('base64enc').", call. = FALSE)
@@ -40,6 +50,11 @@ encode_image_data_url <- function(image_path) {
   paste0("data:", mime_type, ";base64,", base64enc::base64encode(image_path))
 }
 
+#' Extrae texto util de una respuesta de la API de OpenAI
+#'
+#' @param body Cuerpo decodificado de la respuesta JSON.
+#'
+#' @return Una cadena con el texto consolidado o `NULL` si no hay texto usable.
 extract_response_text <- function(body) {
   if (!is.null(body$output_text) && is.character(body$output_text) && nzchar(body$output_text)) {
     return(body$output_text)
@@ -79,6 +94,16 @@ extract_response_text <- function(body) {
   NULL
 }
 
+#' Solicita una interpretacion textual de un analisis SPC
+#'
+#' @param analysis_result Lista devuelta por un wrapper de analisis SPC.
+#' @param plot_path Ruta opcional al grafico exportado.
+#' @param language Idioma objetivo para la interpretacion.
+#' @param extra_instructions Instrucciones adicionales que se agregan al
+#'   prompt principal.
+#'
+#' @return Texto interpretativo generado por OpenAI. Si la respuesta no incluye
+#'   texto directo, devuelve el JSON formateado.
 #' @export
 openai_interpret_analysis <- function(analysis_result, plot_path = NULL, language = "es", extra_instructions = "") {
   if (!requireNamespace("httr2", quietly = TRUE)) {

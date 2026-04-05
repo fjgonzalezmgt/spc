@@ -4,6 +4,12 @@
 #' Interfaz Shiny para seleccionar analisis soportados por `qicharts2`,
 #' configurar parametros por funcion y revisar salidas tabulares y graficas.
 #'
+#' @details
+#' Define la composicion completa de la interfaz Shiny: carga de archivos,
+#' parametros dinamicos por analisis, visualizacion de resultados, grafico e
+#' interpretacion asistida por OpenAI.
+#'
+#' @return Un objeto UI de Shiny.
 #' @keywords internal
 NULL
 

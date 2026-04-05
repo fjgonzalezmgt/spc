@@ -4,6 +4,16 @@
 #' Coordina la carga de datos, la captura dinamica de parametros por analisis
 #' y la ejecucion de wrappers sobre funciones de `qicharts2`.
 #'
+#' @details
+#' Registra reactivos, validaciones, renderizados y acciones de usuario para
+#' ejecutar los wrappers SPC, generar interpretaciones y exportar resultados.
+#'
+#' @param input Lista reactiva de entradas de Shiny.
+#' @param output Lista reactiva de salidas de Shiny.
+#' @param session Sesion activa de Shiny.
+#'
+#' @return Sin valor explicito. Se invoca por efectos laterales dentro de la
+#'   aplicacion Shiny.
 #' @keywords internal
 NULL
 

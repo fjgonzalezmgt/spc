@@ -13,6 +13,13 @@ if (file.exists("openai_helpers.R")) {
   source("openai_helpers.R", local = TRUE)
 }
 
+#' Devuelve un valor por defecto cuando la entrada esta vacia
+#'
+#' @param x Valor opcional.
+#' @param default Valor de respaldo que se devolvera cuando `x` sea `NULL`
+#'   o una cadena vacia.
+#'
+#' @return `x` si tiene contenido; en caso contrario `default`.
 or_default <- function(x, default) {
   if (is.null(x) || identical(x, "")) {
     default
@@ -21,6 +28,10 @@ or_default <- function(x, default) {
   }
 }
 
+#' Verifica que qicharts2 este disponible
+#'
+#' @return `NULL` de forma invisible. Lanza un error si el paquete
+#'   `qicharts2` no esta instalado.
 require_qicharts2 <- function() {
   if (!requireNamespace("qicharts2", quietly = TRUE)) {
     stop(
@@ -33,6 +44,15 @@ require_qicharts2 <- function() {
   }
 }
 
+#' Lee archivos delimitados con configuracion explicita
+#'
+#' @param path Ruta al archivo de texto.
+#' @param header Indicador logico de encabezado.
+#' @param sep Separador de columnas.
+#' @param quote Caracter de comillas.
+#' @param dec Separador decimal.
+#'
+#' @return Un `data.frame` con `stringsAsFactors = FALSE`.
 read_delimited_data <- function(path, header, sep, quote, dec) {
   utils::read.table(
     file = path,
@@ -45,6 +65,16 @@ read_delimited_data <- function(path, header, sep, quote, dec) {
   )
 }
 
+#' Lee datos de entrada desde CSV, TXT o Excel
+#'
+#' @param path Ruta al archivo de origen.
+#' @param header Indicador logico de encabezado para archivos delimitados.
+#' @param sep Separador de columnas para archivos delimitados.
+#' @param quote Caracter de comillas para archivos delimitados.
+#' @param dec Separador decimal para archivos delimitados.
+#' @param sheet Hoja de Excel a leer cuando el archivo es `.xls` o `.xlsx`.
+#'
+#' @return Un `data.frame` con los datos importados.
 #' @export
 read_input_data <- function(path, header, sep, quote, dec, sheet = NULL) {
   ext <- tolower(tools::file_ext(path))
@@ -90,6 +120,10 @@ spc_analysis_catalog <- list(
   )
 )
 
+#' Construye las opciones visibles de analisis SPC
+#'
+#' @return Un vector nombrado para usar en `selectInput()`, donde los valores
+#'   son los ids internos de analisis.
 spc_analysis_choices <- function() {
   stats::setNames(names(spc_analysis_catalog), vapply(
     spc_analysis_catalog,
@@ -114,10 +148,21 @@ qic_chart_choices <- c(
   "G chart" = "g"
 )
 
+#' Identifica columnas numericas
+#'
+#' @param df `data.frame` de entrada.
+#'
+#' @return Un vector de caracteres con nombres de columnas numericas.
 numeric_column_names <- function(df) {
   names(df)[vapply(df, is.numeric, logical(1))]
 }
 
+#' Construye etiquetas de columnas con su clase
+#'
+#' @param df `data.frame` de entrada.
+#'
+#' @return Un vector nombrado donde cada etiqueta combina nombre de columna y
+#'   clase detectada.
 column_choice_values <- function(df) {
   cols <- names(df)
   labels <- vapply(
@@ -128,6 +173,11 @@ column_choice_values <- function(df) {
   stats::setNames(cols, labels)
 }
 
+#' Convierte una lista nombrada en tabla de metricas
+#'
+#' @param x Lista nombrada con valores escalares o vectores cortos.
+#'
+#' @return Un `data.frame` con columnas `Metrica` y `Valor`.
 data_frame_from_named_list <- function(x) {
   if (length(x) < 1) {
     return(data.frame())
@@ -147,11 +197,23 @@ data_frame_from_named_list <- function(x) {
   )
 }
 
+#' Normaliza nombres de hojas de Excel
+#'
+#' @param x Nombre propuesto para una hoja.
+#'
+#' @return Una cadena compatible con las restricciones de Excel.
 sanitize_sheet_name <- function(x) {
   cleaned <- gsub("[\\\\/:*?\\[\\]]", "-", x)
   substr(cleaned, 1, 31)
 }
 
+#' Sustituye marcadores vacios por una etiqueta legible
+#'
+#' @param value Valor a evaluar.
+#' @param missing_label Texto a usar cuando el valor es vacio o representa
+#'   ausencia.
+#'
+#' @return El valor original o `missing_label`.
 non_empty_value <- function(value, missing_label = "No usado") {
   if (is.null(value) || identical(value, "") || identical(value, "_none")) {
     missing_label
@@ -160,6 +222,15 @@ non_empty_value <- function(value, missing_label = "No usado") {
   }
 }
 
+#' Exporta un objeto ggplot a archivo
+#'
+#' @param plot_obj Objeto grafico compatible con `ggplot2::ggsave()`.
+#' @param path Ruta del archivo de salida.
+#' @param width Ancho en pulgadas.
+#' @param height Alto en pulgadas.
+#' @param dpi Resolucion de salida.
+#'
+#' @return La ruta exportada, de forma invisible.
 build_plot_export <- function(plot_obj, path, width = 12, height = 7, dpi = 180) {
   ggplot2::ggsave(
     filename = path,
@@ -172,6 +243,11 @@ build_plot_export <- function(plot_obj, path, width = 12, height = 7, dpi = 180)
   invisible(path)
 }
 
+#' Evalua una expresion con un dispositivo grafico temporal
+#'
+#' @param code Expresion a evaluar.
+#'
+#' @return El resultado de `code`.
 suppress_default_plot_file <- function(code) {
   temp_plot <- tempfile(fileext = ".png")
   grDevices::png(filename = temp_plot, width = 480, height = 480)
@@ -185,6 +261,14 @@ suppress_default_plot_file <- function(code) {
   force(code)
 }
 
+#' Intenta eliminar el archivo lateral `Rplots.pdf`
+#'
+#' @details
+#' Algunos flujos no interactivos de R pueden materializar `Rplots.pdf` en el
+#' directorio de trabajo. Esta utilidad intenta eliminarlo de forma segura.
+#'
+#' @return `TRUE` si el archivo ya no existe al terminar; `FALSE` en caso
+#'   contrario.
 cleanup_rplots_pdf <- function() {
   if (!file.exists("Rplots.pdf")) {
     return(invisible(FALSE))
@@ -200,6 +284,12 @@ cleanup_rplots_pdf <- function() {
   invisible(!file.exists("Rplots.pdf"))
 }
 
+#' Construye la tabla base para un diagrama de Pareto
+#'
+#' @param x Vector categorico.
+#' @param use_na Indicador logico para incluir `NA`.
+#'
+#' @return Un `data.frame` con frecuencia, porcentaje y porcentaje acumulado.
 build_pareto_table <- function(x, use_na = FALSE) {
   counts <- sort(table(x, useNA = if (isTRUE(use_na)) "ifany" else "no"), decreasing = TRUE)
   df <- data.frame(
@@ -213,6 +303,11 @@ build_pareto_table <- function(x, use_na = FALSE) {
   df
 }
 
+#' Convierte una columna binaria a logica
+#'
+#' @param x Vector logico o numerico con valores `0/1`.
+#'
+#' @return Un vector logico.
 coerce_binary_vector <- function(x) {
   if (is.logical(x)) {
     return(x)
@@ -231,6 +326,12 @@ coerce_binary_vector <- function(x) {
   )
 }
 
+#' Ejecuta un analisis SPC basado en `qicharts2::qic`
+#'
+#' @param df `data.frame` con los datos de entrada.
+#' @param params Lista de parametros construida desde la interfaz.
+#'
+#' @return Una lista con metadatos, tablas, grafico y helper de exportacion.
 run_qic_analysis <- function(df, params) {
   require_qicharts2()
 
@@ -338,6 +439,12 @@ run_qic_analysis <- function(df, params) {
   )
 }
 
+#' Ejecuta un analisis de Pareto
+#'
+#' @param df `data.frame` con los datos de entrada.
+#' @param params Lista de parametros construida desde la interfaz.
+#'
+#' @return Una lista con metadatos, tablas, grafico y helper de exportacion.
 run_pareto_analysis <- function(df, params) {
   require_qicharts2()
 
@@ -375,6 +482,12 @@ run_pareto_analysis <- function(df, params) {
   )
 }
 
+#' Ejecuta un analisis Bernoulli CUSUM
+#'
+#' @param df `data.frame` con los datos de entrada.
+#' @param params Lista de parametros construida desde la interfaz.
+#'
+#' @return Una lista con metadatos, tablas, grafico y helper de exportacion.
 run_bchart_analysis <- function(df, params) {
   require_qicharts2()
 
@@ -417,6 +530,13 @@ run_bchart_analysis <- function(df, params) {
   )
 }
 
+#' Despacha el wrapper SPC apropiado
+#'
+#' @param analysis_id Identificador interno del analisis.
+#' @param df `data.frame` con los datos de entrada.
+#' @param params Lista de parametros del analisis.
+#'
+#' @return La estructura devuelta por el wrapper seleccionado.
 run_spc_analysis <- function(analysis_id, df, params) {
   switch(
     analysis_id,
@@ -427,6 +547,14 @@ run_spc_analysis <- function(analysis_id, df, params) {
   )
 }
 
+#' Exporta resultados del analisis a un libro de Excel
+#'
+#' @param path Ruta del archivo `.xlsx` de salida.
+#' @param analysis_result Resultado estructurado del analisis.
+#' @param plot_path Ruta opcional a una imagen del grafico.
+#' @param interpretation_text Texto opcional con interpretacion adicional.
+#'
+#' @return La ruta exportada, de forma invisible.
 write_analysis_export_workbook <- function(path, analysis_result, plot_path = NULL, interpretation_text = NULL) {
   if (!requireNamespace("openxlsx", quietly = TRUE)) {
     stop(
