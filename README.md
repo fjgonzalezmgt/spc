@@ -47,7 +47,8 @@ La app muestra un resumen tabular comun para todos los wrappers, tablas adiciona
 - [`ui.R`](./ui.R): interfaz Shiny dinamica por tipo de analisis
 - [`server.R`](./server.R): flujo reactivo generico
 - [`openai_helpers.R`](./openai_helpers.R): helpers para enviar resultados y graficos a OpenAI
-- [`gage_rr_sample.xlsx`](./gage_rr_sample.xlsx): archivo de prueba con hojas `qic_u_chart`, `pareto`, `bchart` y `README`
+- [`spc_samples.xlsx`](./spc_samples.xlsx): archivo de prueba con una hoja por cada chart de `qic`, ademas de `pareto`, `bchart` y `README`
+- `generate_example_workbook.R`: script local para regenerar el libro de ejemplos
 
 ## Requisitos
 
@@ -104,9 +105,21 @@ Depende del wrapper elegido:
 - `paretochart`: una columna categorica
 - `bchart`: una columna binaria logica o 0/1
 
-El archivo [`gage_rr_sample.xlsx`](./gage_rr_sample.xlsx) ya viene adaptado a esos tres flujos:
+El archivo [`spc_samples.xlsx`](./spc_samples.xlsx) ya viene adaptado a esos flujos y trae una hoja por cada tipo de chart disponible en `qic`:
 
-- `qic_u_chart`: serie temporal con numerador, denominador, faceta y notas
+- `qic_run`
+- `qic_i`
+- `qic_ip`
+- `qic_mr`
+- `qic_xbar`
+- `qic_s`
+- `qic_t`
+- `qic_p`
+- `qic_pp`
+- `qic_c`
+- `qic_u`
+- `qic_up`
+- `qic_g`
 - `pareto`: categorias para priorizacion
 - `bchart`: eventos binarios 0/1
 
